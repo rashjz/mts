@@ -26,8 +26,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Tests for {@link AccountController}
@@ -79,7 +78,8 @@ public class AccountControllerTest {
                 .param("accountId", ACCOUNT_ID.toString())
                 .accept(APPLICATION_JSON))
                 .andDo(print())
-                .andExpect(status().isMethodNotAllowed());
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("{\"error\":{\"status\":404,\"reason\":\"ACCOUNT_LIST_LIMIT_REACHED\",\"message\":\"There isn't enough balance: 200\"}}"));
         //verify
         verify(accountManagementService, times(1)).withdrawMoney(eq(amount), eq(ACCOUNT_ID));
     }
@@ -145,17 +145,15 @@ public class AccountControllerTest {
         doThrow(new InsufficientBalance(ACCOUNT_BALANCE))
                 .when(accountManagementService).transferMoney(eq(BigDecimal.TEN), eq(fromAccountId), eq(toAccountId));
 
-        MvcResult result = this.mockMvc.perform(post("/account/transfer")
+        this.mockMvc.perform(post("/account/transfer")
                 .contentType(APPLICATION_JSON)
                 .param("amount", BigDecimal.TEN.toString())
                 .param("fromAccount", Long.toString(fromAccountId))
                 .param("toAccount", Long.toString(toAccountId))
                 .accept(APPLICATION_JSON))
                 .andDo(print())
-                .andExpect(status().isMethodNotAllowed()).andReturn();
-
-        String expectedErrorMessage = String.format("There isn't enough balance: %s", ACCOUNT_BALANCE);
-        assertEquals(expectedErrorMessage, result.getResolvedException().getMessage());
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("{\"error\":{\"status\":404,\"reason\":\"ACCOUNT_LIST_LIMIT_REACHED\",\"message\":\"There isn't enough balance: 10\"}}"));
     }
 
     private Account createAccount() {
