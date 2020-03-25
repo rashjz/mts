@@ -60,7 +60,6 @@ public class AccountControllerTest {
                 .accept(APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(jsonPath("$.userId.username").value(USERNAME))
-                .andExpect(jsonPath("$.userId.username").value(USERNAME))
                 .andExpect(jsonPath("$.accountId").value(ACCOUNT_ID))
                 .andExpect(jsonPath("$.balance").value(ACCOUNT_BALANCE))
                 .andExpect(status().isOk());
